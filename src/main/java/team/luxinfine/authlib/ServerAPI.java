@@ -124,16 +124,6 @@ public class ServerAPI {
         }
     }
 
-    @Nullable
-    private static GameProfile parseProfile(JsonElement el) {
-        try {
-            return GSON.fromJson(el, GameProfile.class);
-        } catch (RuntimeException e) {
-            LOGGER.warn("Error while parsing profile: {}", e.toString());
-            return null;
-        }
-    }
-
     private static String readAll(InputStream in) throws IOException {
         StringBuilder sb = new StringBuilder();
         byte[] buf = new byte[4096];
