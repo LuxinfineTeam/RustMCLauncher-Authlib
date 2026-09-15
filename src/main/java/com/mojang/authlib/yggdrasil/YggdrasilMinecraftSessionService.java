@@ -78,7 +78,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     protected GameProfile fillGameProfile(GameProfile profile, @SuppressWarnings("all") boolean ignored) {
         if (profile.getId() == null) return profile;
         String key = profile.getId().toString();
-        Map<String, team.luxinfine.authlib.GameProfile> map = lookupProfiles(Collections.singletonList(key), false);
+        Map<String, team.luxinfine.authlib.GameProfile> map = lookupProfiles(Collections.singletonList(key), true);
         return convertProfile(map.get(key));
     }
 
