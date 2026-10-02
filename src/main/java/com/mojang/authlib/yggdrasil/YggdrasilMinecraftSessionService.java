@@ -104,7 +104,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         if (profile == null) return null;
         GameProfile out = new GameProfile(profile.id, profile.name);
         for (team.luxinfine.authlib.GameProfileProperty p : profile.properties)
-            out.getProperties().put(p.name, new Property(p.name, p.value));
+            out.getProperties().put(p.name, new Property(p.name, p.value, ""));
         return out;
     }
 }
