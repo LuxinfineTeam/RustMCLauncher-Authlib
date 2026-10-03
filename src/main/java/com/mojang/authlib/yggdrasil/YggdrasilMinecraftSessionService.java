@@ -78,8 +78,11 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     protected GameProfile fillGameProfile(GameProfile profile, @SuppressWarnings("all") boolean ignored) {
         if (profile.getId() == null) return profile;
         String key = profile.getId().toString();
-        Map<String, team.luxinfine.authlib.GameProfile> map = lookupProfiles(Collections.singletonList(key), true);
-        return convertProfile(map.get(key));
+        team.luxinfine.authlib.GameProfile result = lookupProfiles(Collections.singletonList(key), true).get(key);
+        if (result == null)
+            LOGGER.debug("Couldn't fetch profile properties for {} as the profile does not exist", profile);
+        //Согласно ориг. либе authlib, если профиль не найден - нужно вернуть то, что закинули на вход
+        return result == null ? profile : convertProfile(result);
     }
 
     @Override
