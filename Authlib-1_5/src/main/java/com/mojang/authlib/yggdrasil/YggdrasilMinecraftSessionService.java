@@ -29,6 +29,10 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         super(authenticationService);
     }
 
+    public static YggdrasilMinecraftSessionService create() {
+        return new YggdrasilMinecraftSessionService(null);
+    }
+
     @Override
     public void joinServer(GameProfile profile, String authenticationToken, String serverId) {
         Invoke.invokeClient(() -> {
