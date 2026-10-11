@@ -4,9 +4,12 @@
 
 Каждая папка `Authlib-*` — самодостаточный Gradle-проект. При сборке исходники
 из папки (патч) компилируются `compileOnly`-против оригинального
-`com.mojang:authlib:<версия>`, затем мёржатся с оригинальным jar в
-`build/libs/authlib-<версия>.jar`. Классы патча имеют те же FQCN, что и оригинал,
-поэтому подменяют его в рантайме, переадресуя аутентификацию в API лаунчера:
+`com.mojang:authlib:<версия>`, затем мёржатся с оригинальным jar. Плагин
+JarSplitter делит результат на клиентскую и серверную версии в
+`build/libs/authlib-<версия>-client.jar` и
+`build/libs/authlib-<версия>-server.jar`. Классы патча имеют те же FQCN, что и
+оригинал, поэтому подменяют его в рантайме, переадресуя аутентификацию в API
+лаунчера:
 
 * клиентская сторона — `team.luxinfine.authlib.NativeAPI` (через
   `Invoke.invokeClient(...)`);
@@ -18,6 +21,34 @@
 ```bash
 cd Authlib-<версия> && ./gradlew build
 ```
+
+## Общая сборка и релиз
+
+Сборка всех артефактов. Jar-ники будут в папке `builds/`
+```bash
+./gradlew buildAll
+```
+
+Сборка и публикация артефактов в Github Release:
+```bash
+./gradlew githubRelease
+```
+
+Перед публикацией задайте:
+
+* версию релиза (git-тег и имя релиза) — в `settings.gradle`, поле
+  `gradle.ext.releaseVersion`;
+* токен GitHub с правом `Contents: read and write` — в
+  `~/.gradle/gradle.properties`:
+
+```properties
+githubToken=ghp_...
+```
+
+Владелец и репозиторий берутся автоматически из remote `origin` (например,
+`LuxinfineTeam/RustMCLauncher-Authlib`), поэтому при смене remote менять скрипт
+не нужно. Проверить сценарий без реальной публикации можно командой
+`./gradlew githubRelease -PdryRun=true`.
 
 ## Версии
 

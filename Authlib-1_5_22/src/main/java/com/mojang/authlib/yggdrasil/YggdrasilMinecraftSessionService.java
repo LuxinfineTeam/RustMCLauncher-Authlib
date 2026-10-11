@@ -62,7 +62,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         MinecraftTexturesPayload result;
         try {
-            String json = new String(Base64.decodeBase64(textureProperty.getValue()), StandardCharsets.UTF_8);
+            String json = new String(Base64.decodeBase64(textureProperty.getValue()), java.nio.charset.StandardCharsets.UTF_8);
             result = gson.fromJson(json, MinecraftTexturesPayload.class);
         } catch (JsonParseException e) {
             LOGGER.error("Could not decode textures payload", e);

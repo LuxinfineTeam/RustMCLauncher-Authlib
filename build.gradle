@@ -1,0 +1,99 @@
+plugins {
+    id 'base'
+    id 'com.github.breadmoirai.github-release' version '2.5.2'
+}
+
+// Версия релиза (git-тег и имя релиза) из settings.gradle
+version = gradle.ext.releaseVersion
+
+def buildsDirectory = layout.projectDirectory.dir('builds')
+def authlibProjects = subprojects.findAll { it.name.startsWith('Authlib-') }
+
+subprojects {
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module('team.luxinfine:AuthlibCommonAPI')).using(project(':AuthlibCommonAPI'))
+        }
+    }
+}
+
+// Собираем client/server-версии всех патчей в одну папку builds/
+tasks.register('collectBuilds', Sync) {
+    group = 'build'
+    description = 'Копирует собранные client/server JAR-ы всех версий в builds/'
+    into(buildsDirectory)
+    dependsOn { authlibProjects.collect { it.tasks.named('buildAll') } }
+    authlibProjects.each { authlibProject ->
+        from(authlibProject.layout.buildDirectory.dir('libs')) {
+            include '*-client.jar'
+            include '*-server.jar'
+        }
+    }
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Собирает client/server JAR-ы всех проектов Authlib-*'
+    dependsOn tasks.named('collectBuilds')
+}
+
+// ---------------------------------------------------------------------------
+// Публикация релиза на GitHub
+// ---------------------------------------------------------------------------
+
+// Владелец и репозиторий берутся из подключённого git remote origin,
+// чтобы не хардкодить их в скрипте
+def parseGithubRemote = { String url ->
+    def matcher = url =~ 'github\\.com[/:]([^/]+)/([^/]+?)(?:\\.git)?$'
+    matcher.find() ? [owner: matcher.group(1), repo: matcher.group(2)] : null
+}
+
+def runGit = { List<String> args ->
+    providers.exec {
+        commandLine(['git'] + args)
+        workingDir rootDir
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+}
+
+def originUrl = runGit(['remote', 'get-url', 'origin'])
+def githubRemote = parseGithubRemote(originUrl)
+if (githubRemote == null) {
+    throw new GradleException("Не удалось определить GitHub-репозиторий из remote origin: '${originUrl}'")
+}
+
+def githubToken = gradle.ext.githubToken
+
+// Тег создаётся от текущей ветки подключённого репозитория (или от HEAD,
+// если рабочая копия в detached state)
+def currentBranch = runGit(['rev-parse', '--abbrev-ref', 'HEAD'])
+def targetCommitishValue = (currentBranch && currentBranch != 'HEAD')
+    ? currentBranch
+    : runGit(['rev-parse', 'HEAD'])
+
+githubRelease {
+    owner = githubRemote.owner
+    repo = githubRemote.repo
+    token = githubToken ?: ''
+    tagName = version.toString()
+    releaseName = "Authlib ${version}"
+    targetCommitish = targetCommitishValue
+    generateReleaseNotes = false
+    body = 'Сборки патченных версий Mojang Authlib.'
+    draft = false
+    prerelease = false
+    overwrite = true
+    dryRun = providers.gradleProperty('dryRun').map { it.toBoolean() }.getOrElse(false)
+    releaseAssets = fileTree(buildsDirectory.asFile) { include '*.jar' }
+}
+
+tasks.named('githubRelease') {
+    group = 'publishing'
+    description = 'Собирает все версии Authlib и публикует JAR-ы в GitHub Release'
+    dependsOn tasks.named('buildAll')
+    doFirst {
+        if (!githubToken) {
+            throw new GradleException("GitHub-токен не найден")
+        }
+    }
+}

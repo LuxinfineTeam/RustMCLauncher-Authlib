@@ -44,6 +44,12 @@ def authlibOriginalConfig = configurations.create('originalAuthlib') {
     canBeConsumed = false
 }
 
+def authlibCommonApiConfig = configurations.create('authlibCommonApi') {
+    canBeResolved = true
+    canBeConsumed = false
+    transitive = false
+}
+
 dependencies {
     compileOnly "com.mojang:authlib:$authlibVersion"
     originalAuthlib "com.mojang:authlib:$authlibVersion"
@@ -58,11 +64,15 @@ dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
 
     compileOnly 'com.github.LuxinfineTeam:JarSplitterGradle:api-1.7.10-SNAPSHOT'
+    compileOnly 'team.luxinfine:AuthlibCommonAPI:1.0.0'
+    add('authlibCommonApi', 'team.luxinfine:AuthlibCommonAPI:1.0.0')
 }
+
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { zipTree(authlibOriginalConfig.singleFile) }
+    from { zipTree(authlibCommonApiConfig.singleFile) }
     exclude '/yggdrasil_session_pubkey.der'
 }
 

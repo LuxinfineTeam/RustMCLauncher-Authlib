@@ -1,0 +1,33 @@
+rootProject.name = 'RustLauncher-Authlib'
+
+/*
+ * Версия релиза.
+ * Используется при публикации артефактов на github `./gradlew githubRelease`
+ */
+gradle.ext.releaseVersion = '1.0.0'
+
+/*
+ * Токен GitHub читается кодом из ~/.gradle/gradle.properties
+ * Если ключа нет — пробуем переменную окружения GITHUB_TOKEN
+ */
+def loadGithubToken = {
+    def userGradleProperties = new File(gradle.gradleUserHomeDir, 'gradle.properties')
+    if (userGradleProperties.isFile()) {
+        def properties = new Properties()
+        userGradleProperties.withInputStream { properties.load(it) }
+        def token = properties.getProperty('githubToken')?.trim()
+        if (token) {
+            return token
+        }
+    }
+    return System.getenv('GITHUB_TOKEN')?.trim()
+}
+gradle.ext.githubToken = loadGithubToken()
+
+// Все патчи Authlib-* подключаются как модули единой сборки.
+file(rootDir).listFiles()
+    .findAll { it.isDirectory() && it.name.startsWith('Authlib-') && new File(it, 'build.gradle').isFile() }
+    .sort { a, b -> a.name <=> b.name }
+    .each { include(":${it.name}") }
+
+include(':AuthlibCommonAPI')
