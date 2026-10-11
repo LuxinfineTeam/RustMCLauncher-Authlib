@@ -65,3 +65,4 @@ jar {
     from { zipTree(authlibOriginalConfig.singleFile) }
     exclude '/yggdrasil_session_pubkey.der'
 }
+
