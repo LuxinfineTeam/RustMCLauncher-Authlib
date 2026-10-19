@@ -38,8 +38,6 @@ tasks.withType(JavaCompile).configureEach {
     options.incremental = false
 }
 
-// Базовый слой должен быть Java 8 (использует sun.net.www.protocol.http.Handler).
-// options.release=8 не подходит: ct.sym не содержит sun.*, поэтому собираем через -source/-target.
 tasks.named('compileJava', JavaCompile) {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
