@@ -8,10 +8,8 @@ import team.luxinfine.mcsplitter.api.TargetSide;
 import java.net.URL;
 
 /**
- * Обработка серверного запроса на проверку входа игрока. На вход приходит ссылка в формате
- * <pre>
- * http://session.minecraft.net/game/checkserver.jsp?user=${URLEncoder.encode(username)}&serverId=${URLEncoder.encode(serverId)}
- * </pre>
+ * Обработка серверного запроса на проверку входа игрока. На вход приходит ссылка в формате<BR>
+ * {@code http://session.minecraft.net/game/checkserver.jsp?user=${URLEncoder.encode(username)}&serverId=${URLEncoder.encode(serverId)}}
  * Ожидаемый ответ "YES" в случае успеха. Любой другой ответ отклоняет соединение и не выводится никуда
  */
 @Environment(TargetSide.SERVER)

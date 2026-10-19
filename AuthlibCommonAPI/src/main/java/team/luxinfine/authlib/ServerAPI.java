@@ -1,6 +1,5 @@
 package team.luxinfine.authlib;
 
-import com.google.gson.*;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -13,23 +12,27 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Environment(TargetSide.SERVER)
 public class ServerAPI {
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Logger LOGGER = Logger.getLogger("AuthLib");
 
     private static final String BASE_URL = _baseUrl();
     private static final String ACCESS_TOKEN = _accessToken();
 
     private static final int CONNECT_TIMEOUT_MS = 5000;
     private static final int READ_TIMEOUT_MS = 5000;
+
+    public static void init() {
+        //no-op метод для инициализации URL и токена
+    }
 
     @Nullable
     public static GameProfile has_joined(@Nonnull String user, boolean by_uuid, @Nonnull String serverID) {
@@ -39,38 +42,117 @@ public class ServerAPI {
         query.put("by_uuid", String.valueOf(by_uuid));
 
         try {
-            JsonElement result = request("GET", "/session/has_joined", query, null);
-            return GSON.fromJson(result, GameProfile.class);
+            String json = request("GET", "/session/has_joined", query, null);
+            if (json == null) {
+                return null;
+            }
+            return parseProfile(SimpleJson.parse(json));
         } catch (Exception e) {
-            LOGGER.warn("Error while handling check_join: {}", e.toString());
+            LOGGER.warning("Error while handling check_join: " + e);
             return null;
         }
     }
 
     @Nonnull
     public static Map<String, GameProfile> lookupProfiles(@Nonnull List<String> users, boolean by_uuid) {
-        JsonObject req = new JsonObject();
-        req.addProperty("by_uuid", by_uuid);
-        JsonArray ids = new JsonArray();
-        for (String u : users) {
-            ids.add(new JsonPrimitive(u));
+        StringBuilder body = new StringBuilder();
+        body.append("{\"by_uuid\":").append(by_uuid).append(",\"ids\":[");
+        for (int i = 0; i < users.size(); i++) {
+            if (i > 0) {
+                body.append(',');
+            }
+            body.append(SimpleJson.quote(users.get(i)));
         }
-        req.add("ids", ids);
+        body.append("]}");
 
         try {
-            JsonElement result = request("POST", "/session/profiles", null, req.toString());
-            return GSON.fromJson(result, BulkProfilesResponse.class).profiles;
+            String json = request("POST", "/session/profiles", null, body.toString());
+            if (json == null) {
+                return new HashMap<>();
+            }
+            return parseProfiles(SimpleJson.parse(json));
         } catch (Exception e) {
-            LOGGER.warn("Error while handling lookupProfiles: {}", e.toString());
+            LOGGER.warning("Error while handling lookupProfiles: " + e);
             return new HashMap<>();
         }
     }
 
-    static final class BulkProfilesResponse {
-        public Map<String, GameProfile> profiles;
+    @Nullable
+    private static GameProfile parseProfile(@Nullable Object node) {
+        if (node == null) {
+            return null;
+        }
+        Map<String, Object> obj = asObject(node);
+        String id = requireString(obj, "id");
+        String name = requireString(obj, "name");
+        return new GameProfile(UUID.fromString(id), name, parseProperties(obj.get("properties")));
     }
 
-    private static JsonElement request(
+    @Nonnull
+    private static Map<String, GameProfile> parseProfiles(@Nullable Object node) {
+        Map<String, GameProfile> result = new HashMap<>();
+        if (node == null) {
+            return result;
+        }
+        Map<String, Object> root = asObject(node);
+        Object profiles = root.get("profiles");
+        if (!(profiles instanceof Map)) {
+            return result;
+        }
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) profiles).entrySet()) {
+            if (!(entry.getKey() instanceof String)) {
+                continue;
+            }
+            try {
+                GameProfile profile = parseProfile(entry.getValue());
+                if (profile != null) {
+                    result.put((String) entry.getKey(), profile);
+                }
+            } catch (RuntimeException e) {
+                LOGGER.warning("Skipped malformed profile '" + entry.getKey() + "': " + e);
+            }
+        }
+        return result;
+    }
+
+    @Nonnull
+    private static List<GameProfileProperty> parseProperties(@Nullable Object node) {
+        List<GameProfileProperty> properties = new ArrayList<>();
+        if (!(node instanceof List)) {
+            return properties;
+        }
+        for (Object item : (List<?>) node) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            Object name = ((Map<?, ?>) item).get("name");
+            Object value = ((Map<?, ?>) item).get("value");
+            if (name instanceof String && value instanceof String) {
+                properties.add(new GameProfileProperty((String) name, (String) value));
+            }
+        }
+        return properties;
+    }
+
+    @Nonnull
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asObject(Object node) {
+        if (!(node instanceof Map))
+            throw new IllegalArgumentException("Expected JSON object but got " + node);
+        return (Map<String, Object>) node;
+    }
+
+    @Nonnull
+    private static String requireString(@Nonnull Map<String, Object> obj, @Nonnull String field) {
+        Object value = obj.get(field);
+        if (!(value instanceof String)) {
+            throw new IllegalArgumentException("Expected string field '" + field + "' but got " + value);
+        }
+        return (String) value;
+    }
+
+    @Nullable
+    private static String request(
             String method, String path, @Nullable Map<String, String> query, @Nullable String body
     ) throws IOException {
         HttpURLConnection conn = null;
@@ -115,7 +197,7 @@ public class ServerAPI {
                 if (json.isEmpty()) {
                     return null;
                 }
-                return new JsonParser().parse(json);
+                return json;
             }
         } finally {
             if (conn != null) {
@@ -137,7 +219,7 @@ public class ServerAPI {
     private static String _baseUrl() {
         String value = System.getProperty("LFLauncher.Server.ApiUrl");
         if (value == null || value.trim().isEmpty()) {
-            LOGGER.error("[Authlib] Не задан JVM аргумент -DLFLauncher.Server.ApiUrl");
+            LOGGER.log(Level.SEVERE, "JVM arg -DLFLauncher.Server.ApiUrl not present!");
             System.exit(1);
         }
         return value.trim().replaceAll("/+$", "");
@@ -146,7 +228,7 @@ public class ServerAPI {
     private static String _accessToken() {
         String value = System.getProperty("LFLauncher.Server.AccessToken");
         if (value == null || value.trim().isEmpty()) {
-            LOGGER.error("[Authlib] Не задан JVM аргумент -DLFLauncher.Server.AccessToken");
+            LOGGER.log(Level.SEVERE, "JVM arg -DLFLauncher.Server.AccessToken not present!");
             System.exit(1);
         }
         return value.trim();

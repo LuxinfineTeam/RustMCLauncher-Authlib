@@ -7,10 +7,8 @@ import team.luxinfine.mcsplitter.api.TargetSide;
 import java.net.URL;
 
 /**
- * Обработка подключения клиента к игровому серверу. На вход приходит ссылка в формате
- * <pre>
- * http://session.minecraft.net/game/joinserver.jsp?user=${URLEncoder.encode(username)}&sessionId=${URLEncoder.encode(session)}&serverId=${URLEncoder.encode(serverId)}
- * </pre>
+ * Обработка подключения клиента к игровому серверу. На вход приходит ссылка в формате<BR>
+ * {@code http://session.minecraft.net/game/joinserver.jsp?user=${URLEncoder.encode(username)}&sessionId=${URLEncoder.encode(session)}&serverId=${URLEncoder.encode(serverId)}}
  * Ожидаемый ответ "ok" в случае успеха или строка с ошибкой
  */
 @Environment(TargetSide.CLIENT)

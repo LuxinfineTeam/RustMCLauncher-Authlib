@@ -1,31 +1,32 @@
 package team.luxinfine.authlib.boot;
 
-import team.luxinfine.authlib.redirect.MojangAPIRedirect;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Прелоудер игры с установкой URL хука для перенаправления mojang api на api лаунчера<BR>
- * Именно этот класс будет вызывать лаунчер для запуска игры
+ * Прелоудер клиента<BR>
+ * Именно этот класс будет вызывать лаунчер для запуска клиента
  */
 @Environment(TargetSide.CLIENT)
 public final class LegacyClientEntrypoint {
     private static final Logger LOGGER = Logger.getLogger("AuthLib");
+    private static final String MAIN_CLASS_PROP = "LFLauncher.Boot.MainClass";
 
     public static void main(String[] args) throws Throwable {
-        MojangAPIRedirect.initURLHook();
+        JavaURLHooks.init();
 
-        String bootClass = System.getProperty("LFLauncher.Boot.MainClass");
+        String bootClass = System.getProperty(MAIN_CLASS_PROP);
         if (bootClass == null) {
-            LOGGER.log(Level.SEVERE, "Invalid launcher profile: Main class not specified. Please add jvm arg -DLFLauncher.Boot.MainClass=class.name");
+            LOGGER.log(Level.SEVERE, "Invalid launcher profile: Main class not specified. Please add jvm arg -D"+MAIN_CLASS_PROP+"=class.name");
             System.exit(1);
             return;
         }
-        System.clearProperty("LFLauncher.Boot.MainClass");
+        System.clearProperty(MAIN_CLASS_PROP);
 
         Class<?> clazz;
         try {
@@ -45,6 +46,11 @@ public final class LegacyClientEntrypoint {
             return;
         }
 
-        entrypoint.invoke(null, (Object) args);
+        try {
+            entrypoint.invoke(null, (Object) args);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            throw cause != null ? cause : e;
+        }
     }
 }
