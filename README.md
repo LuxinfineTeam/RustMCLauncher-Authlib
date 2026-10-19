@@ -3,7 +3,7 @@
 Патченные сборки `com.mojang:authlib` для Rust лаунчера от **Luxinfine**.
 
 Каждая папка `Authlib-*` — самодостаточный Gradle-проект. При сборке исходники
-из папки (патч) компилируются `compileOnly`-против оригинального
+из папки (патч) компилируются `compileOnly`-поверх оригинального
 `com.mojang:authlib:<версия>`, затем мёржатся с оригинальным jar. Плагин
 JarSplitter делит результат на клиентскую и серверную версии в
 `build/libs/authlib-<версия>-client.jar` и
@@ -34,29 +34,29 @@ cd Authlib-<версия> && ./gradlew build
 ./gradlew githubRelease
 ```
 
-Перед публикацией задайте:
+## Запуск сервера
 
-* версию релиза (git-тег и имя релиза) — в `settings.gradle`, поле
-  `gradle.ext.releaseVersion`;
-* токен GitHub с правом `Contents: read and write` — в
-  `~/.gradle/gradle.properties`:
-
-```properties
-githubToken=ghp_...
+Запустите серверное ядро через собранный `authlib-version-server.jar`:
+```bash
+java -DLFLauncher.Boot.Core=paper.jar \
+  -DLFLauncher.Server.ApiUrl=http://localhost:9274/api \
+  -DLFLauncher.Server.AccessToken=token \
+  -jar authlib-version-server.jar
 ```
 
-Владелец и репозиторий берутся автоматически из remote `origin` (например,
-`LuxinfineTeam/RustMCLauncher-Authlib`), поэтому при смене remote менять скрипт
-не нужно. Проверить сценарий без реальной публикации можно командой
-`./gradlew githubRelease -PdryRun=true`.
+Параметры `-D` должны идти перед `-jar`:
+* `LFLauncher.Boot.Core` — имя или путь к JAR ядра сервера; относительный путь считается от текущей папки.
+* `LFLauncher.Server.ApiUrl` — базовый URL API лаунчера.
+* `LFLauncher.Server.AccessToken` — токен доступа к API. Скопируйте из связанного с клиентом .hocon профиля в лаунчер-сервере
+* `LFLauncher.Boot.ExtraClassPath` — необязательный classpath дополнительных JAR-файлов; несколько путей разделяются системным разделителем classpath (В Windows `;`, в Unix `:`). Поддерживается wildcard (звездочка) вида `libraries/*`.
+
+Также возможен запуск через ручное указание -cp. Для этого нужно задать `-DLFLauncher.Boot.MainClass=core.class.Name` с главным классом ядра. ВНИМАНИЕ: При запуске через -cp `LFLauncher.Boot.ExtraClassPath` недоступен
 
 ## Версии
 
-Диапазон версий игры → папка с кодом патча для нужной версии authlib.
-Маппинг «релиз → authlib» получен из официального Piston-манифеста; группы
-сформированы по публичным сигнатурам API
+Диапазон версий игры → модуль с кодом патча для нужной версии authlib
 
-| Диапазон версий Minecraft | Папка с кодом                      | authlib |
+| Диапазон версий Minecraft | Модуль с кодом                     | authlib |
 |---|------------------------------------|---------|
 | 1.0 – 1.6.4 | [Authlib-legacy](Authlib-legacy)   | legacy  |
 | 1.7.2 | [Authlib-1_3](Authlib-1_3)         | 1.3     |
@@ -84,11 +84,9 @@ githubToken=ghp_...
 
 #### Legacy верии игры и Authlib
 
-TODO: не реализовано
 Authlib-legacy - это кастомная сборка мини-версии authlib для тех версий игры, где authlib вообще отсутствовал, а
 авторизация выполнялась через хардкод запросы к session.minecraft.net внутри кода игры. Кастомная версия устанавливает
 глобальный хук URL для перенаправления запросов к mojang API на API лаунчера.
 
-TODO: не реализовано
 Для версий игры, где уже существует authlib, но без поддержки Textures API - также устанавливается глобальный перехват,
-но только для skins.minecraft.net.
+для skins.minecraft.net.
