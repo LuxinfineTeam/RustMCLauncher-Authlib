@@ -1,5 +1,8 @@
-package team.luxinfine.authlib;
+package team.luxinfine.rslauncher.server;
 
+import team.luxinfine.authlib.GameProfile;
+import team.luxinfine.authlib.GameProfileProperty;
+import team.luxinfine.authlib.SimpleJson;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -20,6 +23,10 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Имплементация API лаунчера для серверной части игры через HTTP API
+ * @see team.luxinfine.authlib.CommonAPI
+ */
 @Environment(TargetSide.SERVER)
 public class ServerAPI {
     private static final Logger LOGGER = Logger.getLogger("AuthLib");
@@ -228,7 +235,7 @@ public class ServerAPI {
     private static String _accessToken() {
         String value = System.getProperty("LFLauncher.Server.AccessToken");
         if (value == null || value.trim().isEmpty()) {
-            LOGGER.log(Level.SEVERE, "JVM arg -DLFLauncher.Server.AccessToken not present!");
+            LOGGER.log(Level.SEVERE, "JVM arg -LFLauncher.Server.AccessToken not present!");
             System.exit(1);
         }
         return value.trim();

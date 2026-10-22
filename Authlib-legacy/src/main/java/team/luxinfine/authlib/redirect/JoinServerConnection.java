@@ -1,6 +1,6 @@
 package team.luxinfine.authlib.redirect;
 
-import team.luxinfine.authlib.NativeAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -29,7 +29,7 @@ final class JoinServerConnection extends CustomHttpConnection {
         }
 
         try {
-            NativeAPI.joinMCServer(serverId);
+            CommonAPI.joinMCServer(serverId);
         } catch (Throwable e) {
             respond(e.toString());
             return;

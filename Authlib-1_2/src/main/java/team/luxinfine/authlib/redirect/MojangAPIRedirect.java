@@ -1,8 +1,7 @@
 package team.luxinfine.authlib.redirect;
 
 import team.luxinfine.authlib.GameProfile;
-import team.luxinfine.authlib.NativeAPI;
-import team.luxinfine.authlib.ServerAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.URL;
@@ -64,16 +63,11 @@ public final class MojangAPIRedirect {
     }
 
     static GameProfile lookupProfile(String username) {
-        return Invoke.invoke(
-            () -> ServerAPI.lookupProfiles(Collections.singletonList(username), false),
-            () -> {
-                try {
-                    return NativeAPI.lookupProfiles(Collections.singletonList(username), false);
-                } catch (Exception e) {
-                    LOGGER.warning("Error while lookup profiles " + e);
-                    return Collections.<String, GameProfile>emptyMap();
-                }
-            }
-        ).get(username);
+        try {
+            return CommonAPI.lookupProfiles(Collections.singletonList(username), false).get(username);
+        } catch (Exception e) {
+            LOGGER.warning("Error while lookup profiles " + e);
+            return null;
+        }
     }
 }

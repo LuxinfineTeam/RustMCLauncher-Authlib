@@ -15,8 +15,7 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import team.luxinfine.authlib.NativeAPI;
-import team.luxinfine.authlib.ServerAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.InetAddress;
@@ -34,22 +33,18 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
 
     @Override
     public void joinServer(UUID profileId, String authenticationToken, String serverId) throws AuthenticationException {
-        Invoke.invokeClient(() -> {
-            try {
-                NativeAPI.joinMCServer(serverId);
-            } catch (Exception e) {
-                throw new AuthenticationException(e.getMessage());
-            }
-        });
+        try {
+            CommonAPI.joinMCServer(serverId);
+        } catch (Exception e) {
+            throw new AuthenticationException(e.getMessage());
+        }
     }
 
     @Override
     public ProfileResult hasJoinedServer(String user, String serverId, InetAddress address) throws AuthenticationUnavailableException {
-        return Invoke.invokeServer(() -> {
-            team.luxinfine.authlib.GameProfile profile = ServerAPI.has_joined(user, false, serverId);
-            if (profile == null) return null;
-            return new ProfileResult(convertProfile(profile));
-        });
+        team.luxinfine.authlib.GameProfile profile = CommonAPI.has_joined(user, false, serverId);
+        if (profile == null) return null;
+        return new ProfileResult(convertProfile(profile));
     }
 
     @Override
@@ -78,33 +73,13 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
 
     @Override
     public ProfileResult fetchProfile(UUID profileId, boolean requireSecure) {
-        return Invoke.invoke(() -> {
-            team.luxinfine.authlib.GameProfile profile = ServerAPI.lookupProfiles(Collections.singletonList(profileId.toString()), true).get(profileId.toString());
-            if (profile == null) return null;
-            return new ProfileResult(convertProfile(profile));
-        }, () -> {
-            try {
-                team.luxinfine.authlib.GameProfile profile = NativeAPI.lookupProfiles(Collections.singletonList(profileId.toString()), true).get(profileId.toString());
-                if (profile == null) return null;
-                return new ProfileResult(convertProfile(profile));
-            } catch (Exception e) {
-                LOGGER.warn("Error while fetching profile {}", e.toString());
-                return null;
-            }
-        });
+        team.luxinfine.authlib.GameProfile profile = CommonAPI.lookupProfiles(Collections.singletonList(profileId.toString()), true).get(profileId.toString());
+        if (profile == null) return null;
+        return new ProfileResult(convertProfile(profile));
     }
 
     public static Map<String, team.luxinfine.authlib.GameProfile> lookupProfiles(List<String> users, boolean byUuid) {
-        return Invoke.invoke(() ->
-            ServerAPI.lookupProfiles(users, byUuid)
-        , () -> {
-            try {
-                return NativeAPI.lookupProfiles(users, byUuid);
-            } catch (Exception e) {
-                LOGGER.warn("Error while lookup profiles {}", e.toString());
-                return Collections.emptyMap();
-            }
-        });
+        return CommonAPI.lookupProfiles(users, byUuid);
     }
 
     public static GameProfile convertProfile(team.luxinfine.authlib.GameProfile profile) {

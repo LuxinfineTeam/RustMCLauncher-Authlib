@@ -1,6 +1,6 @@
 package team.luxinfine.authlib.boot;
 
-import team.luxinfine.authlib.ServerAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -66,7 +66,7 @@ public final class ServerEntrypoint {
     private static final String PROP_EXTRA_CLASSPATH = "LFLauncher.Boot.ExtraClassPath";
 
     public static void main(String[] args) throws Throwable {
-        ServerAPI.init();
+        CommonAPI.init();
         initURLHooksIfNeeded();
 
         String corePath = System.getProperty(PROP_CORE);

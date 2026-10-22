@@ -1,7 +1,7 @@
 package team.luxinfine.authlib.redirect;
 
 import team.luxinfine.authlib.GameProfile;
-import team.luxinfine.authlib.ServerAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -29,7 +29,7 @@ final class CheckServerConnection extends CustomHttpConnection {
             return;
         }
 
-        GameProfile profile = ServerAPI.has_joined(user, false, serverId);
+        GameProfile profile = CommonAPI.has_joined(user, false, serverId);
         respond(profile == null ? "NO" : "YES");
     }
 }

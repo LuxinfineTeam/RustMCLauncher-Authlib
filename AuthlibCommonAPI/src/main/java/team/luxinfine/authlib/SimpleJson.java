@@ -13,7 +13,7 @@ import java.util.Map;
 //частично поврежденный json, тк глубокая валидая нам попросту не требуется.
 //В старых версиях игры, где-то до 1.7.10, нет GSON из коробки, именно потому сделан такой ручной аналог
 @Environment(TargetSide.SERVER)
-final class SimpleJson {
+public final class SimpleJson {
 
     /**
      * Парсит json строку, возвращает прочитанное значение. JsonArray преобразуется в List, JsonObject в Map

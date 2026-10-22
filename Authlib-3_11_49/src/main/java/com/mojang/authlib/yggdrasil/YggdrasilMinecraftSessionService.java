@@ -19,8 +19,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import team.luxinfine.authlib.NativeAPI;
-import team.luxinfine.authlib.ServerAPI;
+import team.luxinfine.authlib.CommonAPI;
 import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.InetAddress;
@@ -41,22 +40,18 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     @Override
     public void joinServer(GameProfile profile, String authenticationToken, String serverId) throws AuthenticationException {
-        Invoke.invokeClient(() -> {
-            try {
-                NativeAPI.joinMCServer(serverId);
-            } catch (Exception e) {
-                throw new AuthenticationException(e.getMessage());
-            }
-        });
+        try {
+            CommonAPI.joinMCServer(serverId);
+        } catch (Exception e) {
+            throw new AuthenticationException(e.getMessage());
+        }
     }
 
     @Override
     public GameProfile hasJoinedServer(GameProfile user, String serverId, InetAddress address) throws AuthenticationUnavailableException {
-        return Invoke.invokeServer(() -> {
-            team.luxinfine.authlib.GameProfile profile = ServerAPI.has_joined(user.getName(), false, serverId);
-            if (profile == null) return null;
-            return convertProfile(profile);
-        });
+        team.luxinfine.authlib.GameProfile profile = CommonAPI.has_joined(user.getName(), false, serverId);
+        if (profile == null) return null;
+        return convertProfile(profile);
     }
 
     @Override
@@ -106,16 +101,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     public static Map<String, team.luxinfine.authlib.GameProfile> lookupProfiles(List<String> users, boolean byUuid) {
-        return Invoke.invoke(() ->
-            ServerAPI.lookupProfiles(users, byUuid)
-        , () -> {
-            try {
-                return NativeAPI.lookupProfiles(users, byUuid);
-            } catch (Exception e) {
-                LOGGER.warn("Error while lookup profiles {}", e.toString());
-                return Collections.emptyMap();
-            }
-        });
+        return CommonAPI.lookupProfiles(users, byUuid);
     }
 
     public static GameProfile convertProfile(team.luxinfine.authlib.GameProfile profile) {

@@ -125,4 +125,5 @@ jar {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { zipTree(authlibCommonApiConfig.singleFile) }
+    
 }
