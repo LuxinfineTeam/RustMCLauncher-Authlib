@@ -1,6 +1,4 @@
-package team.luxinfine.authlib.boot;
-
-import team.luxinfine.authlib.redirect.MojangAPIRedirect;
+package team.luxinfine.authlib.redirect;
 
 import java.io.IOException;
 import java.net.Proxy;
@@ -9,8 +7,7 @@ import java.net.URLConnection;
 
 public final class JavaURLHooks {
 
-    //Вызывается рефлексией до запуска сервера
-    //А также вызывается из клиентского энтрипоинта
+    //Вызывается рефлексией до запуска сервера/клиента
     public static void init() {
         URL.setURLStreamHandlerFactory(protocol -> {
             //legacy версии игры для mojang api использовали только http протокол

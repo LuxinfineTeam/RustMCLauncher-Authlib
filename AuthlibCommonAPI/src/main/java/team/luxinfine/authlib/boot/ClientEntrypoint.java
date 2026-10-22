@@ -42,7 +42,7 @@ public final class ClientEntrypoint {
     private static void initURLHooksIfNeeded() throws Throwable {
         Class<?> clazz;
         try {
-            clazz = Class.forName("team.luxinfine.authlib.boot.JavaURLHooks");
+            clazz = Class.forName("team.luxinfine.authlib.redirect.JavaURLHooks");
         } catch (ClassNotFoundException noClass) {
             //Класса нет - значит хук не нужен, всё ок
             return;
