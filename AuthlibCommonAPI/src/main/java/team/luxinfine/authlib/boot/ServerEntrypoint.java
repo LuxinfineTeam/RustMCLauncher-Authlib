@@ -58,7 +58,6 @@ public final class ServerEntrypoint {
     //проблем с подгрузкой классов-зависимостей самой authlib (gson / апач и т.п.)
     private static void injectAuthlibImplToBootClasspath(Instrumentation instrumentation, JarFile agentJar) throws Exception {
         Path tempJar = Files.createTempFile("authlib-bootstrap-", ".jar");
-        int copiedClasses = 0;
         try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(tempJar.toFile().toPath()))) {
             Enumeration<JarEntry> entries = agentJar.entries();
             byte[] buffer = new byte[8192];
@@ -83,7 +82,6 @@ public final class ServerEntrypoint {
                         output.write(buffer, 0, count);
                 }
                 output.closeEntry();
-                copiedClasses++;
             }
         }
 
