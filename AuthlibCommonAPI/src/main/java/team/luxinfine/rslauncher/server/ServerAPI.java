@@ -235,7 +235,7 @@ public class ServerAPI {
     private static String _accessToken() {
         String value = System.getProperty("LFLauncher.Server.AccessToken");
         if (value == null || value.trim().isEmpty()) {
-            LOGGER.log(Level.SEVERE, "JVM arg -LFLauncher.Server.AccessToken not present!");
+            LOGGER.log(Level.SEVERE, "JVM arg -DLFLauncher.Server.AccessToken not present!");
             System.exit(1);
         }
         return value.trim();
