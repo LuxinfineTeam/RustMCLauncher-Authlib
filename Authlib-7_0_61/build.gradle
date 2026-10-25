@@ -63,10 +63,6 @@ dependencies {
     add('authlibCommonApi', 'team.luxinfine:AuthlibCommonAPI:1.0.0')
 }
 
-//Разрешаем полный доступ к java sdk, включая internal, для java9+
-//путем прописывания всех модулей в манифесте. Java8 их просто проигнорирует, так что это безопасно
-
-
 jar {
     manifest {
         attributes(rootProject.ext.authlibManifestAttributes)

@@ -9,8 +9,10 @@ version = gradle.ext.releaseVersion
 def buildsDirectory = layout.projectDirectory.dir('builds')
 def authlibProjects = subprojects.findAll { it.name.startsWith('Authlib-') }
 
+//Префикс _SERVERSIDE будет удалён JarSplitter'ом
+//Он помечает, что эти ключи будут добавлены только в server билды
 ext.authlibManifestAttributes = [
-    'Add-Exports': [
+    '_SERVERSIDEAdd-Exports': [
         'java.base/java.lang', 'java.base/java.lang.annotation', 'java.base/java.lang.invoke',
         'java.base/java.lang.ref', 'java.base/java.lang.reflect', 'java.base/java.io',
         'java.base/java.math', 'java.base/java.net', 'java.base/java.nio',
@@ -34,15 +36,13 @@ ext.authlibManifestAttributes = [
         'java.logging/java.util.logging', 'java.desktop/java.awt', 'java.desktop/sun.awt',
         'java.desktop/sun.font'
     ].join(' '),
-    'Add-Opens': null,
-    'Enable-Native-Access': 'ALL-UNNAMED',
-    'Main-Class': 'team.luxinfine.authlib.boot.ServerEntrypoint',
-    'Agent-Class': 'team.luxinfine.authlib.boot.AuthlibAgent',
-    'Launcher-Agent-Class': 'team.luxinfine.authlib.boot.AuthlibAgent',
-    'Premain-Class': 'team.luxinfine.authlib.boot.AuthlibAgent',
-    'Can-Retransform-Classes': 'true'
+    '_SERVERSIDEEnable-Native-Access': 'ALL-UNNAMED',
+    '_SERVERSIDEPremain-Class': 'team.luxinfine.authlib.boot.ServerEntrypoint',
+    '_SERVERSIDECan-Retransform-Classes': 'false'
 ]
-ext.authlibManifestAttributes['Add-Opens'] = ext.authlibManifestAttributes['Add-Exports']
+//Разрешаем полный доступ к java sdk, включая internal, для java9+
+//путем прописывания всех модулей в манифесте. Java8 их просто проигнорирует, так что это безопасно
+ext.authlibManifestAttributes['_SERVERSIDEAdd-Opens'] = ext.authlibManifestAttributes['_SERVERSIDEAdd-Exports']
 
 subprojects {
     configurations.configureEach {
