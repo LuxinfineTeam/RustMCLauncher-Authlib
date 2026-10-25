@@ -51,77 +51,11 @@ dependencies {
 
 //Разрешаем полный доступ к java sdk, включая internal, для java9+
 //путем прописывания всех модулей в манифесте. Java8 их просто проигнорирует, так что это безопасно
-def manifestOpenPackages = [
-        'java.base/java.lang',
-        'java.base/java.lang.annotation',
-        'java.base/java.lang.invoke',
-        'java.base/java.lang.ref',
-        'java.base/java.lang.reflect',
-        'java.base/java.io',
-        'java.base/java.math',
-        'java.base/java.net',
-        'java.base/java.nio',
-        'java.base/java.nio.channels',
-        'java.base/java.nio.charset',
-        'java.base/java.nio.file',
-        'java.base/java.security',
-        'java.base/java.security.cert',
-        'java.base/java.text',
-        'java.base/java.time',
-        'java.base/java.time.format',
-        'java.base/java.util',
-        'java.base/java.util.concurrent',
-        'java.base/java.util.concurrent.atomic',
-        'java.base/java.util.concurrent.locks',
-        'java.base/java.util.function',
-        'java.base/java.util.jar',
-        'java.base/java.util.regex',
-        'java.base/java.util.stream',
-        'java.base/java.util.zip',
-        'java.base/jdk.internal.access',
-        'java.base/jdk.internal.loader',
-        'java.base/jdk.internal.misc',
-        'java.base/jdk.internal.platform',
-        'java.base/jdk.internal.reflect',
-        'java.base/jdk.internal.util',
-        'java.base/jdk.internal.vm',
-        'java.base/jdk.internal.vm.annotation',
-        'java.base/sun.invoke.util',
-        'java.base/sun.net.util',
-        'java.base/sun.net.www',
-        'java.base/sun.net.www.protocol.file',
-        'java.base/sun.net.www.protocol.http',
-        'java.base/sun.net.www.protocol.https',
-        'java.base/sun.net.www.protocol.jar',
-        'java.base/sun.nio.ch',
-        'java.base/sun.nio.cs',
-        'java.base/sun.reflect.generics.reflectiveObjects',
-        'java.base/sun.security.action',
-        'java.base/sun.security.pkcs',
-        'java.base/sun.security.provider',
-        'java.base/sun.security.rsa',
-        'java.base/sun.security.util',
-        'java.base/sun.security.x509',
-        'java.base/sun.util.calendar',
-        'jdk.unsupported/sun.misc',
-        'jdk.unsupported/sun.reflect',
-        'java.logging/java.util.logging',
-        'java.desktop/java.awt',
-        'java.desktop/sun.awt',
-        'java.desktop/sun.font',
-].join(' ')
+
 
 jar {
     manifest {
-        attributes(
-                'Add-Exports'         : manifestOpenPackages,
-                'Add-Opens'           : manifestOpenPackages,
-                //Нужно для jdk25+
-                'Enable-Native-Access': 'ALL-UNNAMED',
-                //На клиенте главный класс из манифеста никогда не будет учитываться,
-                //а вот для запуска сервера "простым" java -jar он нужен
-                'Main-Class': 'team.luxinfine.authlib.boot.ServerEntrypoint',
-        )
+        attributes(rootProject.ext.authlibManifestAttributes)
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { zipTree(authlibCommonApiConfig.singleFile) }
