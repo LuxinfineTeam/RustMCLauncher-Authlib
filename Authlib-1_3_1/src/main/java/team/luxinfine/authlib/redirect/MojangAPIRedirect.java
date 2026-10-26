@@ -2,7 +2,6 @@ package team.luxinfine.authlib.redirect;
 
 import team.luxinfine.authlib.GameProfile;
 import team.luxinfine.authlib.CommonAPI;
-import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.URL;
 import java.net.URLConnection;
@@ -55,7 +54,32 @@ public final class MojangAPIRedirect {
                 String path = u.getPath();
                 if (path.equals("/MinecraftResources/"))
                     return new NotFoundConnection(u);
-                return null;
+
+                //Также, очень старые версии скачивали от туда скины и плащи
+                // Скины: http://s3.amazonaws.com/MinecraftSkins/${username}.png
+                // Плащи: http://s3.amazonaws.com/MinecraftCloaks/${username}.png
+                if (!path.endsWith(".png")) {
+                    return null;
+                }
+                path = path.substring(0, path.length() - ".png".length());
+
+                String username;
+                String property;
+                if (path.startsWith("/MinecraftSkins/")) {
+                    username = path.substring("/MinecraftSkins/".length());
+                    property = "SKIN";
+                } else if (path.startsWith("/MinecraftCloaks/")) {
+                    username = path.substring("/MinecraftCloaks/".length());
+                    property = "CLOAK";
+                } else {
+                    return null;
+                }
+
+                return new UserTextureConnection(u, username, property);
+            }
+            case "snoop.minecraft.net": {
+                //Во 1 домен больше не работает, во 2 он совершенно не нужен, блокируем
+                return new NotFoundConnection(u);
             }
         }
 
