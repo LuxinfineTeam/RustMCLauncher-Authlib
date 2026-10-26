@@ -12,13 +12,12 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import team.luxinfine.authlib.CommonAPI;
-import team.luxinfine.mcsplitter.api.Invoke;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
@@ -57,7 +56,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         MinecraftTexturesPayload result;
         try {
-            String json = new String(Base64.decodeBase64(textureProperty.getValue()), java.nio.charset.StandardCharsets.UTF_8);
+            String json = new String(Base64.decodeBase64(textureProperty.getValue()), StandardCharsets.UTF_8);
             result = gson.fromJson(json, MinecraftTexturesPayload.class);
         } catch (JsonParseException e) {
             LOGGER.error("Could not decode textures payload", e);
@@ -73,7 +72,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return profile;
 
         String key = profile.getId().toString();
-        team.luxinfine.authlib.GameProfile result = lookupProfiles(Collections.singletonList(key), true).get(key);
+        team.luxinfine.authlib.GameProfile result = CommonAPI.lookupProfiles(Collections.singletonList(key), true).get(key);
         if (result == null)
             LOGGER.debug("Couldn't fetch profile properties for {} as the profile does not exist", profile);
         //Согласно ориг. либе authlib, если профиль не найден - нужно вернуть то, что закинули на вход
@@ -88,15 +87,11 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     //В ориг сорцах этот метод для отладки. В целях совместимости пусть будет, но без реализации
     public static void main(String[] args) {}
 
-    public static Map<String, team.luxinfine.authlib.GameProfile> lookupProfiles(List<String> users, boolean byUuid) {
-        return CommonAPI.lookupProfiles(users, byUuid);
-    }
-
     public static GameProfile convertProfile(team.luxinfine.authlib.GameProfile profile) {
         if (profile == null) return null;
         GameProfile out = new GameProfile(profile.id, profile.name);
-        for (team.luxinfine.authlib.GameProfileProperty p : profile.properties)
-            out.getProperties().put(p.name, new Property(p.name, p.value, ""));
+        for (java.util.Map.Entry<String, String> p : profile.toMojangProperties().entrySet())
+            out.getProperties().put(p.getKey(), new Property(p.getKey(), p.getValue(), ""));
         return out;
     }
 }

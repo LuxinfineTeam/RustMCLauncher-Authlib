@@ -10,6 +10,7 @@ import com.mojang.authlib.ProfileLookupCallback;
 import com.mojang.authlib.yggdrasil.response.NameAndId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import team.luxinfine.authlib.CommonAPI;
 
 import java.net.Proxy;
 import java.util.Collections;
@@ -28,7 +29,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
         if (Strings.isNullOrEmpty(name))
             return Optional.empty();
 
-        Map<String, team.luxinfine.authlib.GameProfile> result = YggdrasilMinecraftSessionService.lookupProfiles(Collections.singletonList(name), false);
+        Map<String, team.luxinfine.authlib.GameProfile> result = CommonAPI.lookupProfiles(Collections.singletonList(name), false);
         team.luxinfine.authlib.GameProfile profile = result.get(name);
         if (profile == null) {
             LOGGER.debug("Couldn't find profile {}", name);
@@ -47,7 +48,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
         }
 
         for (List<String> request : Iterables.partition(criteria, 100)) {
-            Map<String, team.luxinfine.authlib.GameProfile> result = YggdrasilMinecraftSessionService.lookupProfiles(request, false);
+            Map<String, team.luxinfine.authlib.GameProfile> result = CommonAPI.lookupProfiles(request, false);
 
             for (String name : request) {
                 team.luxinfine.authlib.GameProfile profile = result.get(name);

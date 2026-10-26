@@ -17,10 +17,10 @@ import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import team.luxinfine.authlib.CommonAPI;
-import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.InetAddress;
 import java.net.Proxy;
@@ -29,7 +29,7 @@ import java.util.*;
 
 public class YggdrasilMinecraftSessionService implements MinecraftSessionService {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Gson gson = new GsonBuilder().create();
+    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
     //Сигнатура обязана совпадать с оригиналом: конструктор вызывает YggdrasilAuthenticationService
     protected YggdrasilMinecraftSessionService(ServicesKeySet servicesKeySet, Proxy proxy, Environment environment) {}
@@ -92,16 +92,12 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
         );
     }
 
-    public static Map<String, team.luxinfine.authlib.GameProfile> lookupProfiles(List<String> users, boolean byUuid) {
-        return CommonAPI.lookupProfiles(users, byUuid);
-    }
-
     public static GameProfile convertProfile(team.luxinfine.authlib.GameProfile profile) {
         if (profile == null) return null;
         //В этих версиях PropertyMap неизменяемый — наполняем многомэп до конструктора
         HashMultimap<String, Property> properties = HashMultimap.create();
-        for (team.luxinfine.authlib.GameProfileProperty p : profile.properties)
-            properties.put(p.name, new Property(p.name, p.value, ""));
+        for (java.util.Map.Entry<String, String> p : profile.toMojangProperties().entrySet())
+            properties.put(p.getKey(), new Property(p.getKey(), p.getValue(), ""));
         return new GameProfile(profile.id, profile.name, new PropertyMap(properties));
     }
 }

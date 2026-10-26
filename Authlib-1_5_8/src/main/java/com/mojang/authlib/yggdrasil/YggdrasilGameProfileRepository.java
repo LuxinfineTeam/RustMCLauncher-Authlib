@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.mojang.authlib.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import team.luxinfine.authlib.CommonAPI;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
         }
 
         for (List<String> request : Iterables.partition(criteria, 100)) {
-            Map<String, team.luxinfine.authlib.GameProfile> result = YggdrasilMinecraftSessionService.lookupProfiles(request, false);
+            Map<String, team.luxinfine.authlib.GameProfile> result = CommonAPI.lookupProfiles(request, false);
 
             for (String name : request) {
                 team.luxinfine.authlib.GameProfile profile = result.get(name);

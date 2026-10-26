@@ -1,8 +1,5 @@
 package team.luxinfine.authlib;
 
-import team.luxinfine.mcsplitter.api.Environment;
-import team.luxinfine.mcsplitter.api.TargetSide;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,7 +9,6 @@ import java.util.Map;
 //В отличии от полноценного парсера, этот НЕ делает жесткую проверку целостности json и может читать даже
 //частично поврежденный json, тк глубокая валидая нам попросту не требуется.
 //В старых версиях игры, где-то до 1.7.10, нет GSON из коробки, именно потому сделан такой ручной аналог
-@Environment(TargetSide.SERVER)
 public final class SimpleJson {
 
     /**

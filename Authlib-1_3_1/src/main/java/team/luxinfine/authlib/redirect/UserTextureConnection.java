@@ -1,7 +1,6 @@
 package team.luxinfine.authlib.redirect;
 
 import team.luxinfine.authlib.GameProfile;
-import team.luxinfine.authlib.GameProfileProperty;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,7 +38,7 @@ final class UserTextureConnection extends HttpURLConnection {
             return;
         }
 
-        String textureUrl = propertyValue(profile, propertyName);
+        String textureUrl = profile.properties.get(propertyName);
         if (textureUrl == null || textureUrl.trim().isEmpty()) {
             this.failure = "HTTP 404 Not Found: Player " + username + " has no " + propertyName;
             return;
@@ -119,14 +118,6 @@ final class UserTextureConnection extends HttpURLConnection {
             return "image/png";
         if ("content-length".equalsIgnoreCase(name) && contentLength >= 0)
             return String.valueOf(contentLength);
-        return null;
-    }
-
-    private static String propertyValue(GameProfile profile, String propertyName) {
-        for (GameProfileProperty property : profile.properties) {
-            if (propertyName.equals(property.name))
-                return property.value;
-        }
         return null;
     }
 }

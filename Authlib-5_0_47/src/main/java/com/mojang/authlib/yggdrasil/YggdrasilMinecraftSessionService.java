@@ -13,10 +13,10 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import team.luxinfine.authlib.CommonAPI;
-import team.luxinfine.mcsplitter.api.Invoke;
 
 import java.net.InetAddress;
 import java.net.Proxy;
@@ -25,7 +25,7 @@ import java.util.*;
 
 public class YggdrasilMinecraftSessionService implements MinecraftSessionService {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Gson gson = new GsonBuilder().create();
+    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
     //В оригинале (keySet, proxy, environment) используются для HTTP-запросов к Mojang;
     //лаунчер их не требует, но сигнатура обязана совпадать — конструктор вызывает YggdrasilAuthenticationService
@@ -78,15 +78,11 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
         return new ProfileResult(convertProfile(profile));
     }
 
-    public static Map<String, team.luxinfine.authlib.GameProfile> lookupProfiles(List<String> users, boolean byUuid) {
-        return CommonAPI.lookupProfiles(users, byUuid);
-    }
-
     public static GameProfile convertProfile(team.luxinfine.authlib.GameProfile profile) {
         if (profile == null) return null;
         GameProfile out = new GameProfile(profile.id, profile.name);
-        for (team.luxinfine.authlib.GameProfileProperty p : profile.properties)
-            out.getProperties().put(p.name, new Property(p.name, p.value, ""));
+        for (java.util.Map.Entry<String, String> p : profile.toMojangProperties().entrySet())
+            out.getProperties().put(p.getKey(), new Property(p.getKey(), p.getValue(), ""));
         return out;
     }
 }

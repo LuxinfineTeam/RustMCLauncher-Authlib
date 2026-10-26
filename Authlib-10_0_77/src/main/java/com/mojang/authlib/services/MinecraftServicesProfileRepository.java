@@ -6,6 +6,7 @@ import com.mojang.authlib.ProfileLookupCallback;
 import com.mojang.authlib.services.response.NameAndId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import team.luxinfine.authlib.CommonAPI;
 
 import java.net.Proxy;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class MinecraftServicesProfileRepository implements GameProfileRepository
                     .map(MinecraftServicesProfileRepository::normalizeName)
                     .collect(Collectors.toList());
             Map<String, team.luxinfine.authlib.GameProfile> result =
-                    MinecraftServicesSessionService.lookupProfiles(normalizedRequest, false);
+                    CommonAPI.lookupProfiles(normalizedRequest, false);
             for (int i = 0; i < normalizedRequest.size(); i++) {
                 String normalizedName = normalizedRequest.get(i);
                 String requestedName = request.get(i);
@@ -61,7 +62,7 @@ public class MinecraftServicesProfileRepository implements GameProfileRepository
 
         String normalizedName = normalizeName(name);
         Map<String, team.luxinfine.authlib.GameProfile> result =
-                MinecraftServicesSessionService.lookupProfiles(Collections.singletonList(normalizedName), false);
+                CommonAPI.lookupProfiles(Collections.singletonList(normalizedName), false);
         team.luxinfine.authlib.GameProfile profile = result.get(normalizedName);
         if (profile == null) {
             LOGGER.debug("Couldn't find profile {}", name);

@@ -1,7 +1,6 @@
 package team.luxinfine.rslauncher.server;
 
 import team.luxinfine.authlib.GameProfile;
-import team.luxinfine.authlib.GameProfileProperty;
 import team.luxinfine.authlib.SimpleJson;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
@@ -15,7 +14,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,21 +121,12 @@ public class ServerAPI {
     }
 
     @Nonnull
-    private static List<GameProfileProperty> parseProperties(@Nullable Object node) {
-        List<GameProfileProperty> properties = new ArrayList<>();
-        if (!(node instanceof List)) {
-            return properties;
-        }
-        for (Object item : (List<?>) node) {
-            if (!(item instanceof Map)) {
-                continue;
-            }
-            Object name = ((Map<?, ?>) item).get("name");
-            Object value = ((Map<?, ?>) item).get("value");
-            if (name instanceof String && value instanceof String) {
-                properties.add(new GameProfileProperty((String) name, (String) value));
-            }
-        }
+    private static Map<String, String> parseProperties(@Nullable Object node) {
+        Map<String, String> properties = new HashMap<>();
+        if (!(node instanceof Map)) return properties;
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) node).entrySet())
+            if (entry.getKey() instanceof String && entry.getValue() instanceof String)
+                properties.put((String) entry.getKey(), (String) entry.getValue());
         return properties;
     }
 

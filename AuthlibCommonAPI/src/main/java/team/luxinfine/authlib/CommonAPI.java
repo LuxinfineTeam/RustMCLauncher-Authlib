@@ -70,7 +70,6 @@ public final class CommonAPI {
     }
 
     @Nullable
-    @SuppressWarnings("unchecked")
     @Environment(TargetSide.CLIENT)
     private static GameProfile toGameProfile(Map<String, Object> map) {
         Object idValue = map.get("id");
@@ -78,18 +77,12 @@ public final class CommonAPI {
         if (idValue == null || nameValue == null)
             return null;
 
-        List<GameProfileProperty> properties = new ArrayList<>();
+        Map<String, String> properties = new HashMap<>();
         Object rawProperties = map.get("properties");
-        if (rawProperties instanceof List) {
-            for (Object rawProperty : (List<Object>) rawProperties) {
-                if (!(rawProperty instanceof Map))
-                    continue;
-                Map<String, Object> property = (Map<String, Object>) rawProperty;
-                Object propertyName = property.get("name");
-                Object propertyValue = property.get("value");
-                if (propertyName == null || propertyValue == null)
-                    continue;
-                properties.add(new GameProfileProperty(propertyName.toString(), propertyValue.toString()));
+        if (rawProperties instanceof Map) {
+            for (Map.Entry<?, ?> property : ((Map<?, ?>) rawProperties).entrySet()) {
+                if (property.getKey() instanceof String && property.getValue() instanceof String)
+                    properties.put((String) property.getKey(), (String) property.getValue());
             }
         }
 
