@@ -4,10 +4,13 @@ import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
 import javax.annotation.Nonnull;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.*;
 
 /**
  * Универсальная точка входа клиента. Лаунчер загружает её системным загрузчиком
@@ -25,8 +28,10 @@ public final class ClientEntrypoint {
     private static final Logger LOGGER = Logger.getLogger("AuthLib");
 
     private static final String PROP_MAIN_CLASS = "LFLauncher.Boot.MainClass";
+    private static final String PROP_LOG_LEVEL = "LFLauncher.LogLevel";
 
     public static void main(String[] args) throws Throwable {
+        configureLogging();
         initURLHooksIfNeeded();
 
         String mainClass = System.getProperty(PROP_MAIN_CLASS);
@@ -36,6 +41,67 @@ public final class ClientEntrypoint {
         }
         System.clearProperty(PROP_MAIN_CLASS);
         launchMainClass(ClientEntrypoint.class.getClassLoader(), mainClass, args);
+    }
+
+    //Настройка дефолтного логгера JUL и уровня логгирования в в log4j
+    //Может быть изменена в рантайме конфигурациями log4j.xml
+    private static void configureLogging() {
+        String configuredLevel = System.getProperty(PROP_LOG_LEVEL, "INFO").trim().toUpperCase();
+
+        Logger root = Logger.getLogger("");
+        for (Handler existing : root.getHandlers()) {
+            root.removeHandler(existing);
+            existing.close();
+        }
+
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        handler.setFormatter(new java.util.logging.Formatter() {
+            private final ThreadLocal<SimpleDateFormat> dateFormat = ThreadLocal.withInitial(
+                    () -> new SimpleDateFormat("dd.MM.yyyy|HH:mm:ss"));
+
+            @Override
+            public String format(LogRecord record) {
+                StringBuilder output = new StringBuilder()
+                        .append('[').append(dateFormat.get().format(new Date(record.getMillis()))).append("] [")
+                        .append(record.getLevel().getName()).append("] ").append(formatMessage(record)).append(System.lineSeparator());
+                if (record.getThrown() != null) {
+                    StringWriter trace = new StringWriter();
+                    record.getThrown().printStackTrace(new PrintWriter(trace));
+                    output.append(trace);
+                }
+                return output.toString();
+            }
+        });
+        root.addHandler(handler);
+
+        switch (configuredLevel) {
+            case "TRACE":
+                root.setLevel(Level.FINEST);
+                System.setProperty("org.apache.logging.log4j.level", "TRACE");
+                System.setProperty("log4j2.level", "TRACE");
+                break;
+            case "DEBUG":
+                root.setLevel(Level.FINE);
+                System.setProperty("org.apache.logging.log4j.level", "DEBUG");
+                System.setProperty("log4j2.level", "DEBUG");
+                break;
+            case "INFO":
+                root.setLevel(Level.INFO);
+                System.setProperty("org.apache.logging.log4j.level", "INFO");
+                System.setProperty("log4j2.level", "INFO");
+                break;
+            case "WARN":
+                root.setLevel(Level.WARNING);
+                System.setProperty("org.apache.logging.log4j.level", "WARN");
+                System.setProperty("log4j2.level", "WARN");
+                break;
+            case "ERROR":
+                root.setLevel(Level.SEVERE);
+                System.setProperty("org.apache.logging.log4j.level", "ERROR");
+                System.setProperty("log4j2.level", "ERROR");
+                break;
+        }
     }
 
     //В некоторых старых версиях игры нужно установить глобальный URL хук

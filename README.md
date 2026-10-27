@@ -48,6 +48,11 @@ java -javaagent:authlib-version-server.jar \
 * `LFLauncher.Server.ApiUrl` — базовый URL API лаунчера.
 * `LFLauncher.Server.AccessToken` — токен доступа к API. Скопируйте из связанного с клиентом .hocon профиля в лаунчер-сервере
 
+## Дополнительные параметры запуска
+
+Клиент и сервер также поддерживает `-DLFLauncher.LogLevel=LEVEL`, позволяющий настроить уровень логов по умолчанию (ядро игры может переопределить)
+Допустимые значения уровня: TRACE DEBUG INFO WARN ERROR
+
 ## Версии
 
 Диапазон версий игры → модуль с кодом патча для нужной версии authlib

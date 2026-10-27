@@ -12,16 +12,21 @@ import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 import java.util.jar.JarOutputStream;
 
 @Environment(TargetSide.SERVER)
 public final class ServerEntrypoint {
     private static final Logger LOGGER = Logger.getLogger("AuthLib");
+
+    private static final String PROP_LOG_LEVEL = "LFLauncher.LogLevel";
 
     //Пакеты authlib, во всех класслоудерах будут загружаться строго из нашего authlib
     private static final String[] AUTHLIB_PACKAGES = {
@@ -33,6 +38,7 @@ public final class ServerEntrypoint {
     //Точка входа для -javaagent
     //Пример запуска сервера: java -javaagent:authlib-xxx-server.jar -jar servercore.jar
     public static void premain(String agentArgs, Instrumentation instrumentation) {
+        configureLogging();
         try {
             File agentFile = new File(ServerEntrypoint.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             JarFile agentJar = new JarFile(agentFile);
@@ -49,6 +55,67 @@ public final class ServerEntrypoint {
             throw new IllegalStateException("Authlib bootstrap initialization failed", cause);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to initialize the Authlib Java agent", e);
+        }
+    }
+
+    //Настройка дефолтного логгера JUL и уровня логгирования в в log4j
+    //Может быть изменена в рантайме конфигурациями log4j.xml
+    private static void configureLogging() {
+        String configuredLevel = System.getProperty(PROP_LOG_LEVEL, "INFO").trim().toUpperCase();
+
+        Logger root = Logger.getLogger("");
+        for (Handler existing : root.getHandlers()) {
+            root.removeHandler(existing);
+            existing.close();
+        }
+
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        handler.setFormatter(new java.util.logging.Formatter() {
+            private final ThreadLocal<SimpleDateFormat> dateFormat = ThreadLocal.withInitial(
+                    () -> new SimpleDateFormat("dd.MM.yyyy|HH:mm:ss"));
+
+            @Override
+            public String format(LogRecord record) {
+                StringBuilder output = new StringBuilder()
+                        .append('[').append(dateFormat.get().format(new Date(record.getMillis()))).append("] [")
+                        .append(record.getLevel().getName()).append("] ").append(formatMessage(record)).append(System.lineSeparator());
+                if (record.getThrown() != null) {
+                    StringWriter trace = new StringWriter();
+                    record.getThrown().printStackTrace(new PrintWriter(trace));
+                    output.append(trace);
+                }
+                return output.toString();
+            }
+        });
+        root.addHandler(handler);
+
+        switch (configuredLevel) {
+            case "TRACE":
+                root.setLevel(Level.FINEST);
+                System.setProperty("org.apache.logging.log4j.level", "TRACE");
+                System.setProperty("log4j2.level", "TRACE");
+                break;
+            case "DEBUG":
+                root.setLevel(Level.FINE);
+                System.setProperty("org.apache.logging.log4j.level", "DEBUG");
+                System.setProperty("log4j2.level", "DEBUG");
+                break;
+            case "INFO":
+                root.setLevel(Level.INFO);
+                System.setProperty("org.apache.logging.log4j.level", "INFO");
+                System.setProperty("log4j2.level", "INFO");
+                break;
+            case "WARN":
+                root.setLevel(Level.WARNING);
+                System.setProperty("org.apache.logging.log4j.level", "WARN");
+                System.setProperty("log4j2.level", "WARN");
+                break;
+            case "ERROR":
+                root.setLevel(Level.SEVERE);
+                System.setProperty("org.apache.logging.log4j.level", "ERROR");
+                System.setProperty("log4j2.level", "ERROR");
+                break;
         }
     }
 
