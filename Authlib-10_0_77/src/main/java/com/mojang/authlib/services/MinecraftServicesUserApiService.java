@@ -9,6 +9,11 @@ import com.mojang.authlib.services.request.AbuseReportRequest;
 import com.mojang.authlib.services.response.KeyPairResponse;
 
 import java.net.Proxy;
+import java.nio.ByteBuffer;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
@@ -28,7 +33,28 @@ public class MinecraftServicesUserApiService implements UserApiService {
 
     @Override
     public KeyPairResponse getKeyPair() {
-        return null;
+        try {
+            // Майнкрафт блокирует чат если нет ключа, генерируем фейковые чтоб заглушить
+            final java.security.KeyPair keyPair = KeyPairGenerator.getInstance("RSA")
+                    .generateKeyPair();
+            final Base64.Encoder encoder = Base64.getMimeEncoder(76, new byte[] {'\n'});
+            final String publicKey = pem("RSA PUBLIC KEY", encoder.encodeToString(keyPair.getPublic().getEncoded()));
+            final String privateKey = pem("RSA PRIVATE KEY", encoder.encodeToString(keyPair.getPrivate().getEncoded()));
+            final Instant now = Instant.now();
+
+            return new KeyPairResponse(
+                    new KeyPairResponse.KeyPair(privateKey, publicKey),
+                    ByteBuffer.wrap(new byte[] {0}),
+                    now.plusSeconds(7L * 24 * 60 * 60).toString(),
+                    now.plusSeconds(24L * 60 * 60).toString()
+            );
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException("RSA is not available", e);
+        }
+    }
+
+    private static String pem(final String type, final String encoded) {
+        return "-----BEGIN " + type + "-----\n" + encoded + "\n-----END " + type + "-----\n";
     }
 
     @Override
