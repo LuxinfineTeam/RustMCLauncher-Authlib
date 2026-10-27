@@ -36,21 +36,17 @@ cd Authlib-<версия> && ./gradlew build
 
 ## Запуск сервера
 
-Запустите серверное ядро через собранный `authlib-version-server.jar`:
+Запустите серверное ядро, подключив `authlib-version-server.jar` как javaagent с указанием настроек через jvm аргументы:
 ```bash
-java -DLFLauncher.Boot.Core=paper.jar \
+java -javaagent:authlib-version-server.jar \
   -DLFLauncher.Server.ApiUrl=http://localhost:9274/api \
   -DLFLauncher.Server.AccessToken=token \
-  -jar authlib-version-server.jar
+  -jar paper.jar
 ```
 
 Параметры `-D` должны идти перед `-jar`:
-* `LFLauncher.Boot.Core` — имя или путь к JAR ядра сервера; относительный путь считается от текущей папки.
 * `LFLauncher.Server.ApiUrl` — базовый URL API лаунчера.
 * `LFLauncher.Server.AccessToken` — токен доступа к API. Скопируйте из связанного с клиентом .hocon профиля в лаунчер-сервере
-* `LFLauncher.Boot.ExtraClassPath` — необязательный classpath дополнительных JAR-файлов; несколько путей разделяются системным разделителем classpath (В Windows `;`, в Unix `:`). Поддерживается wildcard (звездочка) вида `libraries/*`.
-
-Также возможен запуск через ручное указание -cp. Для этого нужно задать `-DLFLauncher.Boot.MainClass=core.class.Name` с главным классом ядра. ВНИМАНИЕ: При запуске через -cp `LFLauncher.Boot.ExtraClassPath` недоступен
 
 ## Версии
 
