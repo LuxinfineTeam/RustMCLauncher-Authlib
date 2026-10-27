@@ -14,10 +14,15 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
 public class YggdrasilUserApiService implements UserApiService {
+    //Из этих пропертей умышленно удалён realms, всё равно технически он недоступен,
+    //зато хоть поменьше ошибок неудачных подключений в логах
+    private static final UserProperties OFFLINE_PROPERTIES = new UserProperties(Set.of(UserFlag.CHAT_ALLOWED, UserFlag.SERVERS_ALLOWED), Map.of());
 
     public YggdrasilUserApiService(final String accessToken, final Proxy proxy, final Environment env) throws AuthenticationException {}
 
