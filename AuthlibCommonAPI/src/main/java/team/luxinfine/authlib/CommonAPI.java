@@ -38,7 +38,7 @@ public final class CommonAPI {
      * @return профиль игрока либо null, если сессия невалидна
      */
     @Nullable
-    public static GameProfile has_joined(@Nonnull String user, boolean by_uuid, @Nonnull String serverID) {
+    public static GameProfile has_joined(@Nonnull String user, boolean by_uuid, @Nonnull String serverID) throws ServerJoinError {
         return Invoke.invokeServer(() -> ServerAPI.has_joined(user, by_uuid, serverID));
     }
 

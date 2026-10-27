@@ -21,6 +21,7 @@ import com.mojang.util.UUIDTypeAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import team.luxinfine.authlib.CommonAPI;
+import team.luxinfine.authlib.ServerJoinError;
 
 import java.net.InetAddress;
 import java.net.Proxy;
@@ -45,7 +46,13 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
 
     @Override
     public ProfileResult hasJoinedServer(String user, String serverId, InetAddress address) throws AuthenticationUnavailableException {
-        team.luxinfine.authlib.GameProfile profile = CommonAPI.has_joined(user, false, serverId);
+        team.luxinfine.authlib.GameProfile profile;
+        try {
+            profile = CommonAPI.has_joined(user, false, serverId);
+        } catch (ServerJoinError e) {
+            LOGGER.error("Server join rejected: " + e.getMessage(), e);
+            throw new AuthenticationUnavailableException(e.getMessage());
+        }
         if (profile == null) return null;
         return new ProfileResult(convertProfile(profile));
     }

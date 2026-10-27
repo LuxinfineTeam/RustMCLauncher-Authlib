@@ -5,9 +5,13 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
 import team.luxinfine.authlib.CommonAPI;
+import team.luxinfine.authlib.ServerJoinError;
 import team.luxinfine.mcsplitter.api.Invoke;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
         super(authenticationService);
@@ -28,7 +32,13 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     @Override
     public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException {
-        team.luxinfine.authlib.GameProfile profile = CommonAPI.has_joined(user.getName(), false, serverId);
+        team.luxinfine.authlib.GameProfile profile;
+        try {
+            profile = CommonAPI.has_joined(user.getName(), false, serverId);
+        } catch (ServerJoinError e) {
+            LOGGER.error("Server join rejected: " + e.getMessage(), e);
+            throw new AuthenticationUnavailableException(e.getMessage());
+        }
         if (profile == null) return null;
         return convertProfile(profile);
     }

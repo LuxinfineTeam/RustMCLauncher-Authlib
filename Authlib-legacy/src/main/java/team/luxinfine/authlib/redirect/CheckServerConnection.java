@@ -2,10 +2,13 @@ package team.luxinfine.authlib.redirect;
 
 import team.luxinfine.authlib.GameProfile;
 import team.luxinfine.authlib.CommonAPI;
+import team.luxinfine.authlib.ServerJoinError;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Обработка серверного запроса на проверку входа игрока. На вход приходит ссылка в формате<BR>
@@ -14,6 +17,7 @@ import java.net.URL;
  */
 @Environment(TargetSide.SERVER)
 final class CheckServerConnection extends CustomHttpConnection {
+    private static final Logger LOGGER = Logger.getLogger(CheckServerConnection.class.getName());
     static final String CHECK_PATH = "/game/checkserver.jsp";
 
     CheckServerConnection(URL url) {
@@ -29,7 +33,14 @@ final class CheckServerConnection extends CustomHttpConnection {
             return;
         }
 
-        GameProfile profile = CommonAPI.has_joined(user, false, serverId);
+        GameProfile profile;
+        try {
+            profile = CommonAPI.has_joined(user, false, serverId);
+        } catch (ServerJoinError e) {
+            LOGGER.log(Level.WARNING, "Server join rejected: " + e.getMessage(), e);
+            respond("NO");
+            return;
+        }
         respond(profile == null ? "NO" : "YES");
     }
 }

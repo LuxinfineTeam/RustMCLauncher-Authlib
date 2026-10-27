@@ -2,6 +2,7 @@ package team.luxinfine.rslauncher.server;
 
 import team.luxinfine.authlib.GameProfile;
 import team.luxinfine.authlib.SimpleJson;
+import team.luxinfine.authlib.ServerJoinError;
 import team.luxinfine.mcsplitter.api.Environment;
 import team.luxinfine.mcsplitter.api.TargetSide;
 
@@ -40,18 +41,20 @@ public class ServerAPI {
     }
 
     @Nullable
-    public static GameProfile has_joined(@Nonnull String user, boolean by_uuid, @Nonnull String serverID) {
+    public static GameProfile has_joined(@Nonnull String user, boolean by_uuid, @Nonnull String serverID) throws ServerJoinError {
         Map<String, String> query = new HashMap<>();
         query.put("server_id", serverID);
         query.put("player", user);
         query.put("by_uuid", String.valueOf(by_uuid));
 
         try {
-            String json = request("GET", "/session/has_joined", query, null);
-            if (json == null) {
-                return null;
+            Response response = request("GET", "/session/has_joined", query, null);
+            if (response.statusCode != 200) {
+                throw new ServerJoinError(response.body);
             }
-            return parseProfile(SimpleJson.parse(json));
+            return response.body.isEmpty() ? null : parseProfile(SimpleJson.parse(response.body));
+        } catch (ServerJoinError e) {
+            throw e;
         } catch (Exception e) {
             LOGGER.warning("Error while handling check_join: " + e);
             return null;
@@ -71,11 +74,13 @@ public class ServerAPI {
         body.append("]}");
 
         try {
-            String json = request("POST", "/session/profiles", null, body.toString());
-            if (json == null) {
+            Response response = request("POST", "/session/profiles", null, body.toString());
+            if (response.statusCode != 200) {
+                LOGGER.severe("Request error while handling lookupProfiles: " + response.body);
                 return new HashMap<>();
             }
-            return parseProfiles(SimpleJson.parse(json));
+
+            return response.body == null ? new HashMap<>() : parseProfiles(SimpleJson.parse(response.body));
         } catch (Exception e) {
             LOGGER.warning("Error while handling lookupProfiles: " + e);
             return new HashMap<>();
@@ -147,8 +152,8 @@ public class ServerAPI {
         return (String) value;
     }
 
-    @Nullable
-    private static String request(
+    @Nonnull
+    private static Response request(
             String method, String path, @Nullable Map<String, String> query, @Nullable String body
     ) throws IOException {
         HttpURLConnection conn = null;
@@ -185,20 +190,38 @@ public class ServerAPI {
             }
 
             int status = conn.getResponseCode();
-            if (status != 200)
-                throw new IOException("HTTP error " + status);
+            if (status != 200) {
+                InputStream errorStream = conn.getErrorStream();
+                String message = "";
+                if (errorStream != null) {
+                    try (InputStream in = errorStream) {
+                        message = readAll(in).trim();
+                    }
+                }
+                if (message.isEmpty()) {
+                    message = "HTTP error " + status;
+                }
+                return new Response(status, message);
+            }
 
             try (InputStream in = conn.getInputStream()) {
                 String json = readAll(in);
-                if (json.isEmpty()) {
-                    return null;
-                }
-                return json;
+                return new Response(status, json);
             }
         } finally {
             if (conn != null) {
                 conn.disconnect();
             }
+        }
+    }
+
+    private static class Response {
+        final int statusCode;
+        final String body;
+
+        private Response(int statusCode, String body) {
+            this.statusCode = statusCode;
+            this.body = body;
         }
     }
 
